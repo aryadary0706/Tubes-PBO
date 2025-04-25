@@ -20,7 +20,7 @@ public class Tubes_PBO {
         movie1.genres.add("Sci-Fi");
         movie1.genres.add("Thriller");
 
-        Series series1 = new Series(2, "Breaking Bad", new Date(), 62);
+        Series series1 = new Series(2, "Breaking Bad", new Date(), 62, 2);
         series1.genres.add("Crime");
         series1.genres.add("Drama");
 

@@ -8,7 +8,7 @@ package com.mycompany.tubes_pbo;
  *
  * @author user
  */
-abstract class User {
+public abstract class User {
     protected String username;
     protected String email;
     protected String password;

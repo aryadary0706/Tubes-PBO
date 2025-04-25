@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import java.util.ArrayList;
-abstract class Content {
+public abstract class Content {
     protected int id;
     protected String title;
     protected List<String> synopsis;
