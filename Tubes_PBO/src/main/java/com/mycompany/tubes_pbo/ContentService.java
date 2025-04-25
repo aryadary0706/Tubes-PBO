@@ -36,4 +36,38 @@ class ContentService {
                 .filter(c -> c.genres.contains(genre))
                 .collect(Collectors.toList());
     }
+    
+    public List<Content> getTopRated() {
+        float maxAvgRating = contents.stream()
+                .map(ContentService::calculateAverageRating)
+                .max(Float::compare)
+                .orElse(0f);
+
+        return contents.stream()
+                .filter(c -> calculateAverageRating(c) == maxAvgRating)
+                .collect(Collectors.toList());
+    }
+
+    public List<Content> getMostReviewed() {
+        int maxReviews = contents.stream()
+                .mapToInt(c -> c.reviews.size())
+                .max()
+                .orElse(0);
+
+        return contents.stream()
+                .filter(c -> c.reviews.size() == maxReviews)
+                .collect(Collectors.toList());
+    }
+
+    // Helper method untuk menghitung rata-rata rating dari seluruh review
+    private static float calculateAverageRating(Content content) {
+        if (content.reviews.isEmpty()) return 0f;
+
+        float total = 0f;
+        for (Review review : content.reviews) {
+            total += review.getRating().getAvgRate();
+        }
+        return total / content.reviews.size();
+    }
+
 }
