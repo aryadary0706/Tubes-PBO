@@ -9,20 +9,29 @@ package com.mycompany.tubes_pbo;
  * @author user
  */
 public abstract class User {
-    protected String username;
-    protected String email;
-    protected String password;
+    private int idUser;
+    private String role;
 
-    public User(String username, String email, String password) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
+    User(int idUser, String role) {
+        this.idUser = idUser;
+        this.role = role;
     }
 
-    public String getUsername() {
-        return username;
+    public int getIdUser() {
+        return idUser;
     }
 
-    public abstract void logout();
+    public void setIdUser(int idUser) {
+        this.idUser = idUser;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
 }
+
 
