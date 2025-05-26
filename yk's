@@ -1,0 +1,158 @@
+🗃️ 1. Database: content
+
+CREATE DATABASE IF NOT EXISTS content;
+USE content;
+
+-- Tabel Series
+CREATE TABLE Series (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    genre VARCHAR(100),
+    sinopsis TEXT,
+    release_date DATE
+);
+
+-- Tabel Review
+CREATE TABLE Review (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    series_id INT,
+    reviewer VARCHAR(100),
+    rating INT CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    FOREIGN KEY (series_id) REFERENCES Series(id)
+);
+
+🧠 2. Interface ContentPage
+
+public interface ContentPage {
+    void showPage();
+    void showTopRated();
+    void showMostReviewed();
+    void showByGenre();
+}
+
+
+🧱 3. Class Series implement ContentPage
+
+import java.util.List;
+
+public class Series implements ContentPage {
+    private int id;
+    private String title;
+    private String genre;
+    private String sinopsis;
+    private String releaseDate;
+    private List<Review> reviews;
+
+    public Series(int id, String title, String genre, String sinopsis, String releaseDate, List<Review> reviews) {
+        this.id = id;
+        this.title = title;
+        this.genre = genre;
+        this.sinopsis = sinopsis;
+        this.releaseDate = releaseDate;
+        this.reviews = reviews;
+    }
+
+    public double getAverageRating() {
+        if (reviews == null || reviews.isEmpty()) return 0.0;
+        return reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
+    }
+
+    @Override
+    public void showPage() {
+        System.out.println("Menampilkan halaman untuk: " + title);
+    }
+
+    @Override
+    public void showTopRated() {
+        System.out.println("Series dengan rating tinggi: " + title + " (" + getAverageRating() + ")");
+    }
+
+    @Override
+    public void showMostReviewed() {
+        System.out.println("Jumlah review: " + (reviews != null ? reviews.size() : 0));
+    }
+
+    @Override
+    public void showByGenre() {
+        System.out.println("Genre: " + genre);
+    }
+
+    // Getter & Setter bisa ditambahkan sesuai kebutuhan
+}
+
+📄 4. series.jsp – Menampilkan Series + Rata-rata Rating + Form Tambah Review
+
+<%@ page import="java.sql.*" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
+<html>
+<head>
+    <title>Daftar Series</title>
+</head>
+<body>
+<h1>Series</h1>
+<%
+    Class.forName("com.mysql.cj.jdbc.Driver");
+    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/content", "root", "");
+
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT * FROM Series");
+
+    while (rs.next()) {
+        int id = rs.getInt("id");
+        String title = rs.getString("title");
+        String genre = rs.getString("genre");
+        String sinopsis = rs.getString("sinopsis");
+
+        // Hitung rata-rata rating
+        PreparedStatement ps = conn.prepareStatement("SELECT AVG(rating) FROM Review WHERE series_id = ?");
+        ps.setInt(1, id);
+        ResultSet avgResult = ps.executeQuery();
+        double avgRating = 0;
+        if (avgResult.next()) avgRating = avgResult.getDouble(1);
+%>
+    <div style="border:1px solid gray; padding:10px; margin:10px;">
+        <h2><%= title %></h2>
+        <p><strong>Genre:</strong> <%= genre %></p>
+        <p><strong>Sinopsis:</strong> <%= sinopsis %></p>
+        <p><strong>Rata-rata Rating:</strong> <%= String.format("%.2f", avgRating) %></p>
+
+        <!-- Form Tambah Review -->
+        <form action="addReview.jsp" method="post">
+            <input type="hidden" name="series_id" value="<%= id %>"/>
+            Nama: <input type="text" name="reviewer"/><br/>
+            Rating (1-5): <input type="number" name="rating" min="1" max="5"/><br/>
+            Komentar: <textarea name="comment"></textarea><br/>
+            <input type="submit" value="Kirim Review"/>
+        </form>
+    </div>
+<%
+    }
+    conn.close();
+%>
+</body>
+</html>
+
+📝 5. addReview.jsp – Menyimpan Review Baru
+
+<%@ page import="java.sql.*" %>
+<%
+    int seriesId = Integer.parseInt(request.getParameter("series_id"));
+    String reviewer = request.getParameter("reviewer");
+    int rating = Integer.parseInt(request.getParameter("rating"));
+    String comment = request.getParameter("comment");
+
+    Class.forName("com.mysql.cj.jdbc.Driver");
+    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/content", "root", "");
+
+    PreparedStatement ps = conn.prepareStatement("INSERT INTO Review (series_id, reviewer, rating, comment) VALUES (?, ?, ?, ?)");
+    ps.setInt(1, seriesId);
+    ps.setString(2, reviewer);
+    ps.setInt(3, rating);
+    ps.setString(4, comment);
+    ps.executeUpdate();
+
+    conn.close();
+    response.sendRedirect("series.jsp");
+%>
+
