@@ -1,0 +1,204 @@
+//java reviews//
+
+public class Reviews {
+    private String nameUser;
+    private String reviewText;
+    private Rating rating;
+
+    public Reviews(String nameUser, String reviewText, Rating rating) {
+        this.nameUser = nameUser;
+        this.reviewText = reviewText;
+        this.rating = rating;
+    }
+
+    public String getNameUser() {
+        return nameUser;
+    }
+
+    public void setNameUser(String nameUser) {
+        this.nameUser = nameUser;
+    }
+
+    public String getReviewText() {
+        return reviewText;
+    }
+
+    public void setReviewText(String reviewText) {
+        this.reviewText = reviewText;
+    }
+
+    public Rating getRating() {
+        return rating;
+    }
+
+    public void setRating(Rating rating) {
+        this.rating = rating;
+    }
+}
+
+//java contentPage//
+import java.util.List;
+
+public class ContentPage {
+    private Content content;
+
+    public ContentPage(Content content) {
+        this.content = content;
+    }
+
+    public void displayContentInfo() {
+        System.out.println("=== " + content.getTitle() + " ===");
+        System.out.println("Sinopsis: " + content.getSinopsis());
+        System.out.println("Genre: " + String.join(", ", content.getGenre()));
+        System.out.println("Pemeran: " + String.join(", ", content.getActors()));
+        System.out.println("Tanggal Rilis: " + content.getReleaseDate());
+    }
+
+    public void displayReviews() {
+        System.out.println("\n--- Reviews ---");
+        List<Review> reviews = content.getReview();
+        Reviews.printAllReviews(reviews);
+        double avgRating = Reviews.calculateAverageRating(reviews);
+        System.out.println("Rata-rata rating: " + avgRating + "/5");
+    }
+
+    public void displayFullPage() {
+        displayContentInfo();
+        displayReviews();
+    }
+}
+
+//FORM REVIEW CONTENT//
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.*" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Form Review</title>
+</head>
+<body>
+    <h2>Tulis Review untuk Konten</h2>
+    <form action="submitReview" method="post">
+        <input type="hidden" name="contentId" value="${param.contentId}" />
+        Nama: <input type="text" name="nameUser" required><br><br>
+        Review: <textarea name="reviewText" required></textarea><br><br>
+        Rating:
+        <select name="rating">
+            <option value="ONE">1</option>
+            <option value="TWO">2</option>
+            <option value="THREE">3</option>
+            <option value="FOUR">4</option>
+            <option value="FIVE">5</option>
+        </select><br><br>
+        <input type="submit" value="Kirim Review">
+    </form>
+</body>
+</html>
+
+//menampilkan top rated, most reviews, show by genre//
+<%@ page import="java.util.*, your.package.ContentRepository, your.package.Content, your.package.Reviews" %>
+<%
+    ContentRepository repo = ContentRepository.getInstance();
+    List<Content> allContent = repo.getAllContent();
+
+    List<Content> topRated = new ArrayList<>(allContent);
+    topRated.sort((c1, c2) -> Double.compare(
+        Reviews.calculateAverageRating(c2.getReviews()),
+        Reviews.calculateAverageRating(c1.getReviews()))
+    );
+
+    List<Content> mostReviewed = new ArrayList<>(allContent);
+    mostReviewed.sort((c1, c2) -> Integer.compare(
+        c2.getReviews().size(),
+        c1.getReviews().size())
+    );
+
+    Map<String, List<Content>> genreMap = new HashMap<>();
+    for (Content c : allContent) {
+        for (String genre : c.getGenre()) {
+            genreMap.computeIfAbsent(genre, k -> new ArrayList<>()).add(c);
+        }
+    }
+%>
+
+<h2>Top Rated Movies</h2>
+<ul>
+<% for (Content c : topRated.subList(0, Math.min(5, topRated.size()))) { %>
+    <li><a href="contentDetail.jsp?contentId=<%= c.getId() %>"><%= c.getTitle() %></a> - Rating: 
+        <%= String.format("%.2f", Reviews.calculateAverageRating(c.getReviews())) %>/5</li>
+<% } %>
+</ul>
+
+<h2>Most Reviewed Movies</h2>
+<ul>
+<% for (Content c : mostReviewed.subList(0, Math.min(5, mostReviewed.size()))) { %>
+    <li><a href="contentDetail.jsp?contentId=<%= c.getId() %>"><%= c.getTitle() %></a> - <%= c.getReviews().size() %> review</li>
+<% } %>
+</ul>
+
+<h2>Show by Genre</h2>
+<%
+    for (Map.Entry<String, List<Content>> entry : genreMap.entrySet()) {
+%>
+    <h3><%= entry.getKey() %></h3>
+    <ul>
+    <% for (Content c : entry.getValue()) { %>
+        <li><a href="contentDetail.jsp?contentId=<%= c.getId() %>"><%= c.getTitle() %></a></li>
+    <% } %>
+    </ul>
+<% } %>
+
+//memberi rating//
+<%@ page import="java.util.*, your.package.*" %>
+<%
+    String contentId = request.getParameter("contentId");
+    Content content = ContentRepository.getInstance().getContentById(contentId);
+
+    if ("POST".equalsIgnoreCase(request.getMethod())) {
+        String nameUser = request.getParameter("nameUser");
+        String reviewText = request.getParameter("reviewText");
+        Rating rating = Rating.valueOf(request.getParameter("rating"));
+
+        Review review = new Review(nameUser, reviewText, rating);
+        content.addReview(review);
+%>
+        <p style="color:green;">Review berhasil ditambahkan!</p>
+<%
+    }
+%>
+
+<form method="post">
+    Nama: <input type="text" name="nameUser" required><br>
+    Review: <textarea name="reviewText" required></textarea><br>
+    Rating:
+    <select name="rating">
+        <option value="ONE">1</option>
+        <option value="TWO">2</option>
+        <option value="THREE">3</option>
+        <option value="FOUR">4</option>
+        <option value="FIVE">5</option>
+    </select><br>
+    <input type="submit" value="Kirim Review">
+</form>
+
+//menampilkan rating di page movie//
+<%@ page import="java.util.*, your.package.*" %>
+<%
+    String contentId = request.getParameter("contentId");
+    Content content = ContentRepository.getInstance().getContentById(contentId);
+    List<Review> reviews = content.getReviews();
+    double avgRating = Reviews.calculateAverageRating(reviews);
+%>
+
+<h1><%= content.getTitle() %></h1>
+
+<h2>Rating: <%= String.format("%.2f", avgRating) %> / 5</h2>
+
+<h3>Reviews:</h3>
+<ul>
+<% for (Review r : reviews) { %>
+    <li><strong><%= r.getNameUser() %></strong>: <%= r.getReviewText() %> (Rating: <%= r.getRating().ordinal() + 1 %>/5)</li>
+<% } %>
+</ul>
+
+<a href="reviewForm.jsp?contentId=<%= contentId %>">Tulis Review</a>
