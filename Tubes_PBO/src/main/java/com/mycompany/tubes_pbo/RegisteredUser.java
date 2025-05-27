@@ -2,28 +2,40 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.mycompany.tubes_pbo;
+package model;
 
 /**
  *
  * @author user
  */
 import java.util.*;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 public class RegisteredUser extends User {
 
     private String username;
     private String email;
     private String password;
-    private List<content> favorites;
-    private List<content> watchlist;
-    private List<content> recommendations;
-    private List<content> contentHistory;
-// Constructor
+    private List<Content> favorites;
+    private List<Content> watchlist;
+    private List<Content> recommendations;
+    private List<Content> contentHistory;
 
+    // Constructor with all parameters
     public RegisteredUser(int id, String role, String username, String email, String password) {
         super(id, role);
+        validateAndInitialize(username, email, password);
+    }
 
+    // Constructor with just username, email, and password
+    public RegisteredUser(String username, String email, String password) {
+        super(generateUserId(), "Registered");
+        validateAndInitialize(username, email, password);
+    }
+
+    // Helper method to validate and initialize fields
+    private void validateAndInitialize(String username, String email, String password) {
         if (username == null || username.trim().isEmpty()) {
             throw new IllegalArgumentException("Username tidak boleh kosong.");
         }
@@ -42,10 +54,15 @@ public class RegisteredUser extends User {
         this.recommendations = new ArrayList<>();
         this.contentHistory = new ArrayList<>();
     }
-//    
+
+    // Helper method to generate user ID
+    private static int generateUserId() {
+        return (int) (Math.random() * 10000) + 1;
+    }
+
+    //    
 //    setter-getter atribut non list
 //    
-
     public String getUsername() {
         return username;
     }
@@ -73,92 +90,88 @@ public class RegisteredUser extends User {
 //    setter-getter atribut list
 //    
 
-    public List<content> getFavorites() {
-        return favorites;
+    public List<Content> getFavorites() {
+        if (getRole().equals("Registered")) {
+            return sortContentsByTitle(new ArrayList<>(favorites));
+        } else {
+            throw new IllegalArgumentException("Harap login terlebih dahulu!");
+        }
     }
 
-    public void setFavorites(List<content> favorites) {
+    public void setFavorites(List<Content> favorites) {
         this.favorites = favorites;
     }
 
-    public List<content> getWatchlist() {
-        return watchlist;
+    public List<Content> getWatchList() {
+        if (getRole().equals("Registered")) {
+            return sortContentsByTitle(new ArrayList<>(watchlist));
+        } else {
+            throw new IllegalArgumentException("Harap login terlebih dahulu!");
+        }
     }
 
-    public void setWatchlist(List<content> watchlist) {
+    public void setWatchlist(List<Content> watchlist) {
         this.watchlist = watchlist;
     }
 
-    public List<content> getRecommendations() {
+    public List<Content> getRecommendations() {
         return recommendations;
     }
 
-    public void setRecommendations(List<content> recommendations) {
+    public void setRecommendations(List<Content> recommendations) {
         this.recommendations = recommendations;
     }
 
-    public List<content> getcontentHistory() {
+    public List<Content> getContentHistory() {
         return contentHistory;
     }
 
-    public void setcontentHistory(List<content> contentHistory) {
+    public void setContentHistory(List<Content> contentHistory) {
         this.contentHistory = contentHistory;
     }
 
-//    Tambah-Hapus method list
-    public void addToFavorites(content c) {
-        if ("Guest".equals(getRole())) {
-            throw new IllegalArgumentException("Anda perlu login untuk mendapatkan fitur ini!");
-        }
-
+// Tambah-Hapus method list
+    public void addToFavorites(Content c) {
         if (!favorites.contains(c)) {
             favorites.add(c);
-            System.out.println(c.getTitle() + " ditambahkan ke watchlist.");
         } else {
-            System.out.println(c.getTitle() + " sudah ada di watchlist.");
+            throw new IllegalArgumentException(c.getTitle() + " sudah ada di favorites.");
         }
     }
 
-    public void addToWatchList(content c) {
-        if ("Guest".equals(getRole())) {
-            throw new IllegalArgumentException("Anda perlu login untuk mendapatkan fitur ini!");
-        }
-
+    public void addToWatchList(Content c) {
         if (!watchlist.contains(c)) {
             watchlist.add(c);
             System.out.println(c.getTitle() + " ditambahkan ke watchlist.");
         } else {
-            System.out.println(c.getTitle() + " sudah ada di watchlist.");
+            throw new IllegalArgumentException(c.getTitle() + " sudah ada di watchlist.");
         }
     }
 
-    // Asumsikan kamu punya akses ke daftar semua konten
-    private static List<content> allcontents = new ArrayList<>(); // Isi bisa dari database
-
-    public void addToRecommendations(content c) {
-        if (c.getGenres().isEmpty()) {
+    public void addToRecommendations(Content c) {
+        if (c == null || c.getGenres().isEmpty()) {
             System.out.println("Tidak ada genre untuk mencari rekomendasi.");
             return;
         }
 
-        List<content> sameGenrecontents = new ArrayList<>();
+        // In future, you may pass all contents from database here
+        List<Content> allContents = new ArrayList<>();
+        List<Content> sameGenreContents = new ArrayList<>();
 
-        for (content other : allcontents) {
+        for (Content other : allContents) {
             if (other.equals(c)) {
-                continue; // Lewati konten yang sama
+                continue;
             }
-            // Jika ada minimal satu genre yang sama
             for (String genre : c.getGenres()) {
                 if (other.getGenres().contains(genre)) {
-                    sameGenrecontents.add(other);
+                    sameGenreContents.add(other);
                     break;
                 }
             }
         }
 
-        // Ambil maksimal 2 konten, hindari duplikasi di recommendations
         int count = 0;
-        for (content rec : sameGenrecontents) {
+        for (Content rec : sameGenreContents) {
             if (!recommendations.contains(rec)) {
                 recommendations.add(rec);
                 System.out.println("Rekomendasi: " + rec.getTitle());
@@ -174,25 +187,7 @@ public class RegisteredUser extends User {
         }
     }
 
-    public void addTocontentHistory(content c) {
-        if (c == null) {
-            System.out.println("Konten tidak valid.");
-            return;
-        }
-
-        // Tambahkan ke riwayat jika belum ada
-        if (!contentHistory.contains(c)) {
-            contentHistory.add(c);
-            System.out.println(c.getTitle() + " ditambahkan ke riwayat.");
-
-            // Setelah tambah ke riwayat, cari rekomendasi
-            addToRecommendations(c);
-        } else {
-            System.out.println(c.getTitle() + " sudah ada di riwayat.");
-        }
-    }
-
-    public void removeFromWatchlist(content c) {
+    public void removeFromWatchlist(Content c) {
         if (watchlist.remove(c)) {
             System.out.println(c.getTitle() + " dihapus dari watchlist.");
         } else {
@@ -200,7 +195,7 @@ public class RegisteredUser extends User {
         }
     }
 
-    public void removeFromFavorites(content c) {
+    public void removeFromFavorites(Content c) {
         if (favorites.remove(c)) {
             System.out.println(c.getTitle() + " dihapus dari watchlist.");
         } else {
@@ -210,20 +205,45 @@ public class RegisteredUser extends User {
 
     public void tampilkanRiwayat() {
         System.out.println("Riwayat Konten:");
-        for (content c : contentHistory) {
+        for (Content c : contentHistory) {
             System.out.println("- " + c.getTitle());
         }
     }
 
-    public void logout() {
-        this.setRole("Guest");
+    private List<Content> sortContentsByTitle(List<Content> contents) {
+        // Create a copy of the original list to avoid modifying it
+        return contents.stream()
+                .filter(Objects::nonNull) // Filter out null contents if necessary
+                .sorted(Comparator.comparing(Content::getTitle, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .collect(Collectors.toList());
+    }
+    
+    public void printFavorites() {
+        System.out.println("Daftar Favorit:");
+        for (Content c : getFavorites()) {
+            System.out.println("- " + c.getTitle());
+        }
     }
 
-    public void displayStatus() {
-        System.out.println("Informasi Akun:");
-        System.out.println("Nama: " + getUsername());
-        System.out.println("Email: " + getEmail());
-        System.out.println("User ID: " + getIdUser());
-        System.out.println("Status: " + getRole());
+    public void printWatchlist() {
+        System.out.println("Watchlist:");
+        for (Content c : getWatchList()) {
+            System.out.println("- " + c.getTitle());
+        }
+    }
+
+    public void printRecommendations() {
+        System.out.println("Rekomendasi:");
+        for (Content c : recommendations) {
+            System.out.println("- " + c.getTitle());
+        }
+    }
+
+    public boolean isFavorite(Content c) {
+        return favorites.contains(c);
+    }
+
+    public boolean isInWatchlist(Content c) {
+        return watchlist.contains(c);
     }
 }
