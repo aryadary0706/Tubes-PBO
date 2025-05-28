@@ -1,0 +1,48 @@
+<%@ page import="your.package.Movie" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Movie Page</title>
+    <style>
+        .movie-container {
+            width: 300px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-family: sans-serif;
+        }
+        .movie-container img {
+            width: 100%;
+            border-radius: 10px;
+        }
+        .movie-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .genre {
+            color: gray;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+<%
+    // Dummy data (kalau belum connect ke controller/servlet)
+    Movie movie = new Movie("The Avengers", "Action, Superhero", "poster.jpg", "avengers.mp4");
+%>
+
+<div class="movie-container">
+    <img src="<%= movie.getPosterUrl() %>" alt="Poster">
+    
+    <div class="genre"><%= movie.getGenre() %></div>
+    
+    <div class="movie-title">
+        <a href="player.jsp?movieUrl=<%= movie.getMovieUrl() %>">
+            <%= movie.getTitle() %>
+        </a>
+    </div>
+</div>
+
+</body>
+</html>
