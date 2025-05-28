@@ -49,5 +49,16 @@ class Movie extends Content implements Contentable{
     public List<String> getGenres() {
         return genres;
     }
+   
+    /*nampilin akumulasi rata-rata rating movie*/
+    public double getAverageRating() {
+    if (ratings == null || ratings.isEmpty()) return 0.0;
+
+    double total = 0;
+    for (Rating r : ratings) {
+        total += r.getScore(); // asumsi getScore() mengembalikan nilai int/double dari rating
+    }
+    return total / ratings.size();
+    }
 
 }
