@@ -1,0 +1,24 @@
+@WebServlet("/addReview")
+public class AddReviewServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String nama = request.getParameter("nama");
+        String reviewText = request.getParameter("reviewText");
+        int ratingValue = Integer.parseInt(request.getParameter("rating"));
+        String movieTitle = request.getParameter("movieTitle");
+
+        // Misal movieList disimpan di application scope
+        List<Movie> movieList = (List<Movie>) getServletContext().getAttribute("movies");
+
+        for (Movie m : movieList) {
+            if (m.getTitle().equals(movieTitle)) {
+                m.addRating(new Rating(nama, reviewText, ratingValue)); // asumsinya ada constructor Rating(nama, review, score)
+                break;
+            }
+        }
+
+        // Redirect kembali ke halaman movie
+        response.sendRedirect("movie.jsp?title=" + movieTitle);
+    }
+}
