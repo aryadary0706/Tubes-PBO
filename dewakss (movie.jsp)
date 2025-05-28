@@ -46,3 +46,10 @@
 
 </body>
 </html>
+
+
+/Kalau kamu punya beberapa film, kamu bisa pakai List<Movie> dan looping pakai:
+<% for (Movie m : movies) { %>
+    <!-- tampilkan movie -->
+<% } %>
+/
