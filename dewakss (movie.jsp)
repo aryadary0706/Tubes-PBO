@@ -66,6 +66,20 @@
     <button type="submit">Kirim Review</button>
 </form>
 
+/Menampilkan Review di movie.jsp/
+<h3>Review Pengguna</h3>
+<%
+    for (Rating r : movie.getRatings()) {
+%>
+    <div style="border-bottom: 1px solid #ddd; margin-bottom: 10px;">
+        <strong><%= r.getNama() %></strong> memberi rating <%= r.getScore() %> bintang<br>
+        "<%= r.getReviewText() %>"
+    </div>
+<%
+    }
+%>
+
+
 </body>
 </html>
 
